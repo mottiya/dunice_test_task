@@ -1,24 +1,20 @@
+from typing import Dict, Any, List
+
+from django.db import DatabaseError, transaction
 from django.db.models import Q, Subquery, Count
+
 from .models import (
     Poll,
-    # QuestionType,
-    # Question,
+    Question,
     Answer,
     AnswerUser,
     QuestionTypeEnum
-)
-from .serializers import (
-    PollSerializer,
-    # QuestionTypeSerializer,
-    # QuestionSerializer,
-    # AnswerSerializer,
-    AnswerUserSerializer,
 )
 
 
 class PollService():
 
-    def get_polls_by_user_id(self, user_id: int):
+    def get_polls_by_user_id(self, user_id: int) -> Poll:
         """
         Получить все опросы которые проходил пользователь\n
         sql:\n
@@ -33,10 +29,9 @@ class PollService():
             )
         """
         subquery_poll_id = Answer.objects.filter(users=user_id).select_related('question__poll').values('question__poll_id').distinct()
-        polls = Poll.objects.filter(id__in=Subquery(subquery_poll_id))
-        return PollSerializer(polls, many=True).data
+        return Poll.objects.filter(id__in=Subquery(subquery_poll_id))
 
-    def is_can_add_answer_user(self, user_id: int, answer_id: int):
+    def is_can_add_answer_user(self, user_id: int, answer_id: int) -> bool:
         """
         Проверяет можно ли вставить ответ на вопрос для пользователя\n
         sql:\n
@@ -65,7 +60,7 @@ class PollService():
         )
         return not result.exists()
 
-    def get_answer_user_by_poll(self, user_id: int, poll_id: int):
+    def get_answer_user_by_poll(self, user_id: int, poll_id: int) -> AnswerUser:
         """
         Получить все ответы пользователя по опросу
         sql:\n
@@ -75,14 +70,17 @@ class PollService():
             INNER JOIN "polls_question" ON ("polls_answer"."question_id" = "polls_question"."id")
             WHERE ("polls_answeruser"."user_id" = 1 AND "polls_question"."poll_id" = 1)
         """
-        queryset = AnswerUser.objects.select_related('answer__question').filter(user_id=user_id).filter(answer__question__poll_id=poll_id)
-        return AnswerUserSerializer(queryset, many=True).data
+        return AnswerUser.objects.select_related('answer__question').filter(user_id=user_id).filter(answer__question__poll_id=poll_id)
 
-    def get_most_complited_polls(self, count: int = 5):
+    def get_most_complited_polls(self, count: int = 5) -> Poll:
         """
         Получить наиболее часто проходимые опросы.
         sql:\n
-        SELECT "polls_poll"."id", "polls_poll"."user_id", "polls_poll"."title", "polls_poll"."created_at",COUNT(DISTINCT "polls_answeruser"."id") AS "num_users"
+        SELECT "polls_poll"."id",
+               "polls_poll"."user_id",
+               "polls_poll"."title",
+               "polls_poll"."created_at",
+               COUNT(DISTINCT "polls_answeruser"."id") AS "num_users"
             FROM "polls_poll"
             LEFT OUTER JOIN "polls_question" ON ("polls_poll"."id" = "polls_question"."poll_id")
             LEFT OUTER JOIN "polls_answer" ON ("polls_question"."id" = "polls_answer"."question_id")
@@ -91,7 +89,23 @@ class PollService():
             ORDER BY 5 DESC
             LIMIT 5
         """
-        queryset = Poll.objects.annotate(
+        return Poll.objects.annotate(
             num_users=Count('question__answer__answeruser', distinct=True)
         ).order_by('-num_users')[:count]
-        return PollSerializer(queryset, many=True).data
+
+    def create_poll_with_related_entities(self, data: Dict[str, str | List]) -> Poll | None:
+        """
+        Создает опрос и все связанные в нем сущьности из переданных данных в одной транзакции
+        """
+        try:
+            with transaction.atomic():
+                questions_data: List[Dict[str, Any]] = data.pop('questions')
+                poll = Poll.objects.create(**data)
+                for question_data in questions_data:
+                    answers_data = question_data.pop('answers')
+                    question = Question.objects.create(poll=poll, **question_data)
+                    for answer_data in answers_data:
+                        Answer.objects.create(question=question, **answer_data)
+                return poll
+        except DatabaseError:
+            return None

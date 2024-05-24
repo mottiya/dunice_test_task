@@ -1,11 +1,22 @@
 from django.urls import path
+from rest_framework.urlpatterns import format_suffix_patterns
 
 from . import views
 
-urlpatterns = [
-    path('polls/<int:user_id>/', views.get_polls_by_user_id_view),
-    path('answer/', views.add_answer_user_view),
-    path('get_answer/', views.get_answer_user_by_poll_view),
-    path('polls/', views.get_most_complited_polls_view),
-    path('polls/create', views.create_poll_view)
-]
+poll_list = views.RetrieveListCreatePollsView.as_view({
+    'get': 'list',
+    'post': 'create',
+})
+poll_retrieve = views.RetrieveListCreatePollsView.as_view({
+    'get': 'retrieve',
+})
+answer_list = views.ListCreateAnswerUsersView.as_view({
+    'get': 'list',
+    'post': 'create',
+})
+
+urlpatterns = format_suffix_patterns([
+    path('polls/', poll_list, name='poll-list'),
+    path('polls/user/<int:user_id>/', poll_retrieve, name='poll-retrieve'),
+    path('answer/', answer_list, name='answer-list'),
+])
