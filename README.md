@@ -35,7 +35,9 @@ dev-режиме.
 
 ## Installation
 Установить Docker https://docs.docker.com/engine/install/
+
 Установить Git https://git-scm.com/downloads
+
 Клонировать репозиторий и перейти в рабочую директорию
 ```bash
 git clone https://github.com/teekzaur/dunice_test_task
