@@ -1,4 +1,3 @@
-# from django.contrib.auth.models import User
 from django.db.models import Q, Subquery, Count
 from .models import (
     Poll,

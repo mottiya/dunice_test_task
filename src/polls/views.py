@@ -5,7 +5,7 @@ from rest_framework.exceptions import ValidationError
 
 from .utils import PollService
 from .serializers import (
-    # PollSerializer,
+    PollSerializer,
     # QuestionTypeSerializer,
     # QuestionSerializer,
     # AnswerSerializer,
@@ -32,8 +32,8 @@ def add_answer_user_view(request: Request) -> Response:
 
 @api_view(http_method_names=['GET'])
 def get_answer_user_by_poll_view(request: Request) -> Response:
-    user_id = request.query_params['user_id']
-    poll_id = request.query_params['poll_id']
+    user_id = request.query_params.get('user_id', 0)
+    poll_id = request.query_params.get('poll_id', 0)
     answer_user_list = PollService().get_answer_user_by_poll(user_id, poll_id)
     return Response({'answers': answer_user_list})
 
@@ -43,3 +43,45 @@ def get_most_complited_polls_view(request: Request):
     count = int(request.query_params.get('count', 5))
     poll_list = PollService().get_most_complited_polls(count)
     return Response({'polls': poll_list})
+
+
+@api_view(http_method_names=['POST'])
+def create_poll_view(request: Request):
+    serializer = PollSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+    return Response({'new_poll': serializer.data})
+
+
+"""
+{
+    "user": 1,
+    "title": "Пятый опрос",
+    "questions": [
+        {
+            "question_type": 1,
+            "question_text": "Question example text",
+            "answers": [
+                {
+                    "answer_text": "Answer example text"
+                },
+                {
+                    "answer_text": "Answer example text"
+                }
+            ]
+        },
+        {
+            "question_type": 2,
+            "question_text": "Question example text",
+            "answers": [
+                {
+                    "answer_text": "Answer example text"
+                },
+                {
+                    "answer_text": "Answer example text"
+                }
+            ]
+        }
+    ]
+}
+"""
