@@ -24,4 +24,4 @@ class AnswerAdmin(admin.ModelAdmin):
 
 @admin.register(AnswerUser)
 class AnswerUserAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user_id', 'answer_id')
+    list_display = ('id', 'answer_id', 'user_id')

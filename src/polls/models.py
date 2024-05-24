@@ -42,6 +42,7 @@ class Answer(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     answer_text = models.TextField(max_length=1024)
     created_at = models.DateTimeField(auto_now_add=True)
+    users = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True, through="AnswerUser")
 
     def __str__(self) -> str:
         return f'{self.pk}: {self.answer_text[:30]}...'
@@ -53,9 +54,6 @@ class AnswerUser(models.Model):
         on_delete=models.CASCADE,
     )
     answer = models.ForeignKey(Answer, on_delete=models.CASCADE)
-
-    class Meta:
-        unique_together = ('user', 'answer')
 
     def __str__(self) -> str:
         return f'user: {self.user_id}, answer: {self.answer_id}'
