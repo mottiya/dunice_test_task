@@ -4,7 +4,7 @@ from .models import Poll, QuestionType, Question, Answer, AnswerUser
 
 @admin.register(Poll)
 class PollAdmin(admin.ModelAdmin):
-    list_display = ('id', 'title')
+    list_display = ('id', 'title', 'user')
 
 
 @admin.register(QuestionType)
@@ -14,7 +14,7 @@ class QuestionTypeAdmin(admin.ModelAdmin):
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
-    list_display = ('id', 'poll_id', 'question_type', 'question_text', 'created_at')
+    list_display = ('id', 'poll_id', 'question_text', 'question_type', 'created_at')
 
 
 @admin.register(Answer)
