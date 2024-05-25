@@ -43,6 +43,8 @@ dev-режиме.
 git clone https://github.com/teekzaur/dunice_test_task
 cd dunice_test_task
 ```
+Переименовать .env.example в .env
+
 Собрать и запустить контейнеры с приложением и базой данных (загружаются тестовые данные)
 ```bash
 docker compose build
